@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ColdCraft — AI Cold Email Automation</title>
+  <meta name="description" content="Generate hyper-personalized cold emails for every HR contact using AI. Paste your resume, HR table, and let ColdCraft do the rest." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- PDF.js for resume text extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+
+  <!-- Background decorations -->
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">ColdCraft</span>
+        <span class="logo-badge">AI</span>
+      </div>
+      <nav class="header-nav">
+        <span class="nav-tag">v1.0</span>
+        <a href="https://github.com" target="_blank" class="btn-ghost">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-chip">
+        <span class="chip-dot"></span>
+        Powered by Gemini AI
+      </div>
+      <h1 class="hero-title">
+        Turn your resume into<br />
+        <span class="gradient-text">100 personalized emails</span>
+      </h1>
+      <p class="hero-sub">Paste your HR list, resume, and target role — ColdCraft generates tailored cold emails for every recruiter in seconds.</p>
+    </div>
+  </section>
+
+  <!-- Main App -->
+  <main class="app-container">
+
+    <!-- Step 1: API Key -->
+    <section class="card step-card" id="step-api">
+      <div class="step-header">
+        <div class="step-badge">01</div>
+        <div>
+          <h2 class="step-title">API Configuration</h2>
+          <p class="step-desc">Enter your Gemini API key to power the email generation.</p>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="apiKey">Gemini API Key</label>
+        <div class="input-with-action">
+          <input type="password" id="apiKey" class="input-field" placeholder="AIza..." autocomplete="off" />
+          <button class="btn-icon" id="toggleApiKey" title="Show/Hide API Key">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="field-hint">Your key is used client-side only and never stored on any server. <a href="https://aistudio.google.com/app/apikey" target="_blank">Get a free key →</a></p>
+      </div>
+
+      <!-- Gmail Connect -->
+      <div class="gmail-connect-box" id="gmailConnectBox">
+        <div class="gmail-connect-left">
+          <div class="gmail-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#EA4335" opacity="0.15"/><path d="M20 8l-8 5-8-5V6l8 5 8-5v2z" fill="#EA4335"/><path d="M4 6h16v12H4V6z" stroke="#EA4335" stroke-width="1.5" fill="none"/></svg>
+          </div>
+          <div>
+            <p class="gmail-label">Connect Gmail to Send Emails</p>
+            <p class="gmail-sub" id="gmailStatusText">Not connected — emails will only be generated, not sent</p>
+          </div>
+        </div>
+        <div class="gmail-connect-right">
+          <button class="btn-gmail" id="gmailConnectBtn" onclick="connectGmail()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+            Connect Gmail
+          </button>
+          <button class="btn-ghost-sm hidden" id="gmailDisconnectBtn" onclick="disconnectGmail()">Disconnect</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Target Role -->
+    <section class="card step-card" id="step-role">
+      <div class="step-header">
+        <div class="step-badge">02</div>
+        <div>
+          <h2 class="step-title">Target Role</h2>
+          <p class="step-desc">Specify the position you're applying for.</p>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="targetRole">Role / Position</label>
+        <input type="text" id="targetRole" class="input-field" placeholder="e.g. Software Development Intern, ML Engineer, Full-Stack Developer" />
+      </div>
+    </section>
+
+    <!-- Step 3: Resume -->
+    <section class="card step-card" id="step-resume">
+      <div class="step-header">
+        <div class="step-badge">03</div>
+        <div>
+          <h2 class="step-title">Resume PDF</h2>
+          <p class="step-desc">Upload your resume — it will be attached to every email sent.</p>
+        </div>
+      </div>
+      <div class="upload-drop-zone" id="resumeDropZone" onclick="document.getElementById('resumeFileInput').click()">
+        <div class="upload-icon">📄</div>
+        <p class="upload-title">Click or drag &amp; drop your resume PDF</p>
+        <p class="upload-sub">PDF only · Attached to every email automatically</p>
+        <input type="file" id="resumeFileInput" accept=".pdf" style="display:none" />
+      </div>
+      <div class="upload-status hidden" id="resumeUploadStatus">
+        <span class="upload-file-icon">✓</span>
+        <span id="resumeFileName">resume.pdf</span>
+        <button class="btn-remove" onclick="clearResume()">✕</button>
+      </div>
+    </section>
+
+    <!-- Step 4: Email Template -->
+    <section class="card step-card" id="step-template">
+      <div class="step-header">
+        <div class="step-badge">04</div>
+        <div>
+          <h2 class="step-title">Email Template</h2>
+          <p class="step-desc">Write your email exactly as you want it sent. Use <code>[Name]</code> and <code>[Company]</code> as placeholders — they'll be replaced for each HR.</p>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="emailSubject">Subject Line</label>
+        <input type="text" id="emailSubject" class="input-field" placeholder="e.g. Aspiring SDE Intern — Vansh Munjal" />
+        <p class="field-hint">Use <code>[Company]</code> if you want the company name in subject.</p>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="emailTemplate">Email Body</label>
+        <textarea id="emailTemplate" class="textarea-field" rows="10" placeholder="Dear [Name],&#10;&#10;I hope this message finds you well. I am a final-year B.Tech CSE student at Bennett University (9.2 CGPA) with hands-on experience in AI/ML and full-stack development...&#10;&#10;I would love to explore internship opportunities at [Company]. My resume is attached for your reference.&#10;&#10;Regards,&#10;Vansh Munjal"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="senderName">Your Name</label>
+        <input type="text" id="senderName" class="input-field" placeholder="e.g. Vansh Munjal" />
+      </div>
+      <div class="two-col">
+        <div class="field-group">
+          <label class="field-label" for="senderPhone">Phone</label>
+          <input type="text" id="senderPhone" class="input-field" placeholder="+91 XXXXX XXXXX" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="senderLinkedIn">LinkedIn URL</label>
+          <input type="text" id="senderLinkedIn" class="input-field" placeholder="linkedin.com/in/your-profile" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 5: HR Table -->
+    <section class="card step-card" id="step-table">
+      <div class="step-header">
+        <div class="step-badge">05</div>
+        <div>
+          <h2 class="step-title">HR Contact Table</h2>
+          <p class="step-desc">Paste your CSV/TSV data or use the table editor below.</p>
+        </div>
+      </div>
+
+      <!-- Tab toggle -->
+      <div class="tab-group">
+        <button class="tab-btn active" data-tab="paste" id="tabPaste">Paste CSV/TSV</button>
+        <button class="tab-btn" data-tab="manual" id="tabManual">Manual Entry</button>
+      </div>
+
+      <!-- Paste mode -->
+      <div class="tab-content active" id="tabContentPaste">
+        <div class="field-group">
+          <label class="field-label">Paste your CSV or TSV data</label>
+          <div class="csv-format-hint">
+            <strong>Expected columns:</strong> Name, Email, Title, Company (any order, first row = header)
+          </div>
+          <textarea id="csvInput" class="textarea-field mono" rows="8" placeholder="Name,Email,Title,Company&#10;Priya Sharma,priya@techcorp.com,HR Manager,TechCorp India&#10;Rahul Verma,rahul@startup.io,Talent Acquisition,Startup.io&#10;..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn-secondary" id="parseCSVBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+            Parse &amp; Preview Table
+          </button>
+          <span style="color:var(--text-muted);font-size:13px">or</span>
+          <label class="btn-secondary" style="cursor:pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload CSV File
+            <input type="file" id="csvFileInput" accept=".csv,.tsv,.txt" style="display:none" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Manual mode -->
+      <div class="tab-content" id="tabContentManual">
+        <div class="table-scroll">
+          <table class="hr-table" id="hrTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Title / Designation</th>
+                <th>Company</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="hrTableBody">
+              <tr>
+                <td><input type="text" class="table-input" placeholder="Priya Sharma" data-col="name"/></td>
+                <td><input type="text" class="table-input" placeholder="priya@company.com" data-col="email"/></td>
+                <td><input type="text" class="table-input" placeholder="HR Manager" data-col="title"/></td>
+                <td><input type="text" class="table-input" placeholder="TechCorp" data-col="company"/></td>
+                <td><button class="btn-remove" onclick="removeRow(this)">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-secondary" id="addRowBtn" onclick="addRow()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Row
+        </button>
+      </div>
+
+      <!-- Preview table after parse -->
+      <div id="tablePreview" class="table-preview hidden">
+        <div class="preview-header">
+          <span id="previewCount" class="preview-count">0 contacts loaded</span>
+          <button class="btn-ghost-sm" id="clearTableBtn">Clear</button>
+        </div>
+        <div class="table-scroll">
+          <table class="hr-table preview-table" id="previewTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Title</th>
+                <th>Company</th>
+              </tr>
+            </thead>
+            <tbody id="previewTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Generate Button -->
+    <div class="generate-section">
+      <button class="btn-generate" id="generateBtn" onclick="generateEmails()">
+        <span class="btn-generate-icon">✦</span>
+        <span id="generateBtnText">Generate Personalized Emails</span>
+        <span class="btn-generate-arrow">→</span>
+      </button>
+      <p class="generate-hint">Emails are generated one by one using Gemini AI</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section hidden" id="progressSection">
+      <div class="progress-card card">
+        <div class="progress-header">
+          <div class="progress-spinner"></div>
+          <span id="progressText">Generating emails...</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+        <p id="progressDetail" class="progress-detail"></p>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <section class="results-section hidden" id="resultsSection">
+      <div class="results-header">
+        <div>
+          <h2 class="results-title">Generated Emails</h2>
+          <p class="results-sub" id="resultsSub">0 emails ready to send</p>
+        </div>
+        <div class="results-actions">
+          <button class="btn-secondary" id="copyAllBtn" onclick="copyAll()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy All
+          </button>
+          <button class="btn-secondary" id="downloadBtn" onclick="downloadAll()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download .txt
+          </button>
+          <button class="btn-primary" id="sendAllBtn" onclick="sendAllEmails()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <span id="sendAllBtnText">Send All via Gmail</span>
+          </button>
+        </div>
+      </div>
+      <div id="emailCards" class="email-cards"></div>
+    </section>
+
+    <!-- Error section -->
+    <div class="error-section hidden" id="errorSection">
+      <div class="error-card card">
+        <div class="error-icon">⚠</div>
+        <p id="errorMessage">Something went wrong.</p>
+        <button class="btn-secondary" onclick="dismissError()">Dismiss</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>ColdCraft · AI Cold Email Automation · Built with Gemini API</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
