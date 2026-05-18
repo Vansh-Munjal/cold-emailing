@@ -149,10 +149,6 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ---
 
-## 📄 License
 
-MIT License — feel free to use and modify for your own job search automation!
-
----
 
 <p align="center">Built with ❤️ by <a href="https://github.com/Vansh-Munjal">Vansh Munjal</a></p>
